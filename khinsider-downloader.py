@@ -6,6 +6,30 @@ from bs4 import BeautifulSoup
 
 KHINSIDER_SITE_ROOT = "https://downloads.khinsider.com/"
 
+def file_name_cleaner(file_name: str, replace_char: str="_") -> str:
+    """
+    ### Clean the file name, remove the special characters.
+    This method will remove the special characters from the file name.
+
+    Parameters:
+        - file_name (str): The file name, what do you expect?
+    """
+
+    # Banned character in Windows filenames
+    windows_unusable_characters = ['<', '>', ':', '"', '/', '\\', '|', '?', '*']
+
+    # Banned character in Linux filenames
+    linux_unusable_characters = ['/', '\0', ':', '\n', '\t', '\r', '?', '*', '|', '>', '<', '"', '\'']
+
+    # Combine both lists
+    unusable_characters = windows_unusable_characters + linux_unusable_characters
+
+    # Replace the unusable characters with `_`.
+    for char in unusable_characters:
+        file_name = file_name.replace(char, replace_char)
+
+    return file_name
+
 def get_format_from_link(file_url: str) -> str:
     """
     ### Get the format of the file from the link.
