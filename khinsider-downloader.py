@@ -1,6 +1,6 @@
 import os
 import requests
-
+import asyncio
 from typing import Dict, List
 from bs4 import BeautifulSoup
 
@@ -43,3 +43,25 @@ def song_download_page_handler(html_content: str) -> Dict[str, str]:
     all_available_format = [get_format_from_link(x) for x in all_download_link]
 
     return dict(zip(all_available_format, all_download_link))
+
+async def album_page_row_parser(song_url: str, semaphore: asyncio.Semaphore) -> Dict[str, str]:
+    """
+    ### Parse a single row of the album page.
+    Return the song download link of the song.
+    1. Download the song page content.
+    2. Get the available song format along with the download link.
+
+    Parameters:
+        - row (str): The html content of the row.
+        - semaphore (asyncio.Semaphore): The semaphore to control maximum number of workers.
+    """
+
+    async with semaphore:
+
+        # Get the song page.
+        song_page = await asyncio.to_thread(requests.get, song_url)
+
+        # Get the song download link.
+        song_download_link = song_download_page_handler(song_page.text)
+
+        return song_download_link
