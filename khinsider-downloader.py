@@ -39,7 +39,7 @@ def get_format_from_link(file_url: str) -> str:
         - file_url (str): The link url of the file.
     """
 
-    return os.path.splitext(file_url)[1].replace(".", "")
+    return os.path.splitext(file_url)[1].replace(".", "").lower()
 
 
 def song_download_page_handler(html_content: str) -> Dict[str, str]:
@@ -58,7 +58,7 @@ def song_download_page_handler(html_content: str) -> Dict[str, str]:
 
     # Trace back to the parent element to get the download link.
     all_download_link: List[str] = [
-        x.parent["href"].lower() # type: ignore
+        x.parent["href"] # type: ignore
         for x in download_link_buttons 
         if x.parent and x.parent.has_attr("href")
     ]
