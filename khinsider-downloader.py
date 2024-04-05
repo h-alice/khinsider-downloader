@@ -4,6 +4,8 @@ import requests
 from typing import Dict, List
 from bs4 import BeautifulSoup
 
+KHINSIDER_SITE_ROOT = "https://downloads.khinsider.com/"
+
 def get_format_from_link(file_url: str) -> str:
     """
     ### Get the format of the file from the link.
