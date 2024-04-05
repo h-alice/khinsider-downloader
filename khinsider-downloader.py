@@ -1,4 +1,5 @@
 import os
+import urllib.parse
 import requests
 import asyncio
 from typing import Dict, List
@@ -151,3 +152,42 @@ async def album_page_handler(html_content: str, max_parser_worker: int=3) -> Dic
     )
 
     return parsed_page
+
+async def download_single_song(song_url: str, semaphore: asyncio.Semaphore, content_length_check: bool=False) -> str:
+    """
+    ### Download the song.
+    It will download the song from the link.
+
+    Parameters:
+        - song_url (str): The link url of the song.
+        - semaphore (asyncio.Semaphore): The semaphore to control
+            maximum number of workers.
+    """
+    
+    async with semaphore:
+
+        # Extract the file name from the url.
+        song_name = os.path.basename(song_url)
+
+        # URL decode the song name.
+        song_name = urllib.parse.unquote(song_name, encoding='utf-8', errors='replace')
+
+        # Replace some special characters in both Linux and Windows with `_`.
+        song_name = file_name_cleaner(song_name)
+
+        # Get the song content.
+        song_content = await asyncio.to_thread(requests.get, song_url)
+
+        # Check if length of the content matches the content length.
+        if content_length_check:
+            if "Content-Length" in song_content.headers:  # Check if the content length field is available.
+                content_length = int(song_content.headers["Content-Length"]) # Get the downloaded content length.
+                if content_length != len(song_content.content): # Check if the content length matches.
+                    raise ValueError("Content length mismatch.")
+
+
+        # Everything is OK, write the song content to the file.
+        with open(song_name, 'wb') as f:
+            f.write(song_content.content)
+
+        return song_name
