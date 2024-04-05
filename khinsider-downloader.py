@@ -65,3 +65,65 @@ async def album_page_row_parser(song_url: str, semaphore: asyncio.Semaphore) -> 
         song_download_link = song_download_page_handler(song_page.text)
 
         return song_download_link
+    
+async def album_page_handler(html_content: str, max_parser_worker: int=3) -> Dict[str, str | List[Dict[str, str]]]:
+    """
+    ### Handle the album page.
+    It will extract the download links of the songs in the album.
+
+    Parameters:
+        - html_content (str): The html content of the page.
+    """
+
+    content_page = BeautifulSoup(html_content, 'html.parser')
+
+    # Get the album title if available.
+    album_title = content_page.select_one(r'#pageContent h2')
+    if album_title:
+        album_title = album_title.text
+    else:
+        album_title = ""
+    
+    # Get the album table.
+    album_table = content_page.select_one(r'#songlist')
+
+    if not album_table:
+        song_links = []
+    else:
+        all_rows = album_table.select('tr:nth-child(n+1)') # Skip the header row.
+        if len(all_rows) == 0:
+            song_links = []
+        else:
+            # Get the elements of song links.
+            song_links = [
+                x.select_one('.playlistDownloadSong a')["href"] # type: ignore
+                for x in all_rows
+                if x.select_one('.playlistDownloadSong a')
+            ]
+
+            # Combine the song links with the site root.
+            song_links = [
+                f"{KHINSIDER_SITE_ROOT}{x}"
+                for x in song_links
+            ]
+
+    # Create the semaphore.
+    semaphore = asyncio.Semaphore(max_parser_worker)
+
+    # Create the tasks.
+    tasks = [
+        album_page_row_parser(x, semaphore)
+        for x in song_links
+        if isinstance(x, str)
+    ]
+
+    # Run the tasks.
+    all_song_download_link = await asyncio.gather(*tasks)
+
+    # Combine the final parsed page.
+    parsed_page = dict(
+        album_title=album_title,
+        songs=all_song_download_link
+    )
+
+    return parsed_page
