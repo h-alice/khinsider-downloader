@@ -1,3 +1,3 @@
 # khinsider-downloader
 
-It a little script for crawling "khinsider" music site.
+It is a little script for crawling "khinsider" music site.
