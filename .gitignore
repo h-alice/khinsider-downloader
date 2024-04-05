@@ -215,5 +215,9 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
-# VS Code
+# ---> Visual Studio Code
 .vscode
+
+# ---> Misc
+*.mp3
+*.flac
