@@ -4,6 +4,7 @@ import asyncio
 import requests
 import argparse
 import urllib.parse
+from pathlib import Path
 from typing import Dict, List
 from bs4 import BeautifulSoup
 
@@ -155,7 +156,7 @@ async def album_page_handler(html_content: str, max_parser_worker: int=3) -> Dic
 
     return parsed_page
 
-async def download_single_song(song_url: str, semaphore: asyncio.Semaphore, content_length_check: bool=False) -> str:
+async def download_single_song(song_url: str, semaphore: asyncio.Semaphore, dir: Path = Path("."), content_length_check: bool=False) -> str:
     """
     ### Download the song.
     It will download the song from the link.
@@ -189,10 +190,11 @@ async def download_single_song(song_url: str, semaphore: asyncio.Semaphore, cont
 
 
         # Everything is OK, write the song content to the file.
+        song_name = dir / song_name
         with open(song_name, 'wb') as f:
             f.write(song_content.content)
 
-        return song_name
+        return song_name.as_posix()
     
 
 async def main(args):
@@ -206,6 +208,8 @@ async def main(args):
 
     # Get the album page.
     album_page = requests.get(args.album_link)
+
+    logging.info(f"[.] Parsing the album page.")
 
     full_album_parsed = await album_page_handler(
         album_page.text,
@@ -235,9 +239,20 @@ async def main(args):
         for song in full_album_parsed['songs']
     ]
 
+    # Create directory to save the album.
+    if isinstance(full_album_parsed['album_title'], str):
+        if full_album_parsed['album_title'] == "":
+            file_name_cleaned = "downloaded_album"
+        album_dir = Path(args.save_dir) / file_name_cleaner(full_album_parsed['album_title'])
+    else:
+        album_dir = Path(args.save_dir) / "downloaded_album"
+
+    album_dir.mkdir(parents=True, exist_ok=True)
+    
+
     # Create the tasks.
     tasks = [
-        download_single_song(song[args.format], semaphore)
+        download_single_song(song[args.format], semaphore, dir=album_dir, content_length_check=True)
         for song in full_album_parsed['songs']
     ]
 
@@ -255,7 +270,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Script description here")
 
     # Album link argument
-    parser.add_argument("--album-link", type=str, help="The URL of the target album")
+    parser.add_argument("--album-link", type=str, default=None, help="The URL of the target album")
 
     # Album name argument
     parser.add_argument("--album", type=str, default=None, help="The album name")
