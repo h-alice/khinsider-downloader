@@ -9,6 +9,7 @@ from typing import Dict, List
 from bs4 import BeautifulSoup
 
 KHINSIDER_SITE_ROOT = "https://downloads.khinsider.com/"
+KHINSIDER_ALBUM_ROOT = "https://downloads.khinsider.com/game-soundtracks/album/"
 
 def file_name_cleaner(file_name: str, replace_char: str="_") -> str:
     """
@@ -270,19 +271,19 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Script description here")
 
     # Album link argument
-    parser.add_argument("--album-link", type=str, default=None, help="The URL of the target album")
+    parser.add_argument("-l", "--album-link", type=str, default=None, help="The URL of the target album")
 
     # Album name argument
-    parser.add_argument("--album", type=str, default=None, help="The album name")
+    parser.add_argument("-a", "--album", type=str, default=None, help="The album name")
 
     # Max worker argument
     parser.add_argument("--max-worker", type=int, default=3, help="The max concurrent worker number")
 
     # Perfered format argument: One of ["mp3", "flac", "ogg"]
-    parser.add_argument("--format", type=str, default="mp3", help="Download format: mp3, flac, ogg")
+    parser.add_argument("-f", "--format", type=str, default="mp3", help="Download format: mp3, flac, ogg")
 
     # Directory to save the album
-    parser.add_argument("--save-dir", type=str, default=".", help="The directory to save the album")
+    parser.add_argument("-d", "--save-dir", type=str, default=".", help="The directory to save the album")
 
     # Capture the other argument
     parser.add_argument("positional_arg", nargs="?", default=None, help="The album url, if no flag is provided.")
